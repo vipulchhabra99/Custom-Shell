@@ -40,6 +40,8 @@
 
 #include <fcntl.h>
 
+#include "history.h"
+
 #include "main.h"
 
 

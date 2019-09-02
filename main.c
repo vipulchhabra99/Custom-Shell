@@ -50,6 +50,8 @@
 
 #include "status_check.h"
 
+#include "history.h"
+
 #include "main.h"
 
 
@@ -73,60 +75,6 @@ void print_perms(mode_t st) {
     perms[9] = (st && S_IXOTH) ? 'x':'-';
     perms[10] = '\0';
     printf("%s", perms);
-}
-
-void add_to_history(char* str){
-        
-        FILE *file;
-        char new_file[] = "history";
-        char error[] = "Unable to write history";
-        file = fopen(new_file, "a+");
-        
-
-        fputs(str,file);
-
-        fclose(file);
-
-
-}
-
-void read_history(int n){
-
-        int fd;
-
-        char c;
-
-        int l = 0;
-
-        //printf("%d",n);
-
-        char file[] = "history";
-
-        char error[] = "Unable to write history";
-
-        fd = open(file,O_RDONLY);
-        if(fd < 0){
-                printf("Error");
-        } else {
-                lseek(fd,0,SEEK_END);
-
-                while(l < n+1 && lseek(fd,-1,SEEK_CUR) != -1){
-                        read(fd,&c,1);
-                        
-                        lseek(fd,-1,SEEK_CUR);
-                        
-                        if(c == '\n')
-                                l++;
-                }
-                
-                while(read(fd,&c,1) != 0){
-                        printf("%c",c);
-                }
-        }
-
-        
-
-
 }
 
 pid_t process[100];

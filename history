@@ -1,0 +1,10 @@
+echo "hi"
+history
+sleep 5
+history
+sleep 5;sleep 5
+history
+history
+sleep 2 &
+history
+
