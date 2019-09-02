@@ -1,5 +1,5 @@
-#ifndef SHELL_PATH_H  
-#define SHELL_PATH_H
+#ifndef SHELL_INPUT_H  
+#define SHELL_INPUT_H
 
 void shellbasic(char* current_location);
 
