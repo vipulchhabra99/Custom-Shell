@@ -48,6 +48,8 @@
 
 #include "tokenize_command.h"
 
+#include "status_check.h"
+
 #include "main.h"
 
 
@@ -130,27 +132,6 @@ void read_history(int n){
 pid_t process[100];
 
 int low = 1,high = 1;
-
-void status_check(){
-        int status;
-        pid_t pid;
-
-        int flag = 0;
-
-        for(int i = low;i < high; i++){
-                pid = waitpid(process[i],&status,WNOHANG);
-
-                //printf("%d %d\n",process[i],pid);
-
-                if(pid == process[i]){
-                        low = i+1;
-                        printf("[process with %d pid has completed]\n", pid);
-                        process[i] = -10;
-                        flag = 1;
-                }
-        }
-
-}
 
 int main() {
 

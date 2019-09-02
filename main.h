@@ -7,6 +7,5 @@ struct arr {
 void print_perms(mode_t st);
 void add_to_history(char* str);
 void read_history(int n);
-void status_check();
 
 #endif 
