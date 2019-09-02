@@ -44,6 +44,8 @@
 
 #include "main.h"
 
+#include "shell_path.h"
+
 void print_perms(mode_t st) {
     char perms[11];
     if(st && S_ISREG(st)) perms[0]='-';
@@ -118,29 +120,6 @@ void read_history(int n){
         
 
 
-}
-
-void shellbasic(char* current_location) {
-
-        
-        char hostname[100];
-        char workingdir[100];
-        int size = strlen(current_location);
-        gethostname(hostname,size);
-
-        char* new_location = getcwd(workingdir,100);
-        if(strlen(new_location) == size){
-            printf("%s@%s:~",getenv("USER"),hostname);
-        }
-        else {   
-                printf("%s@%s:~",getenv("USER"),hostname);
-                
-                //printf("%s",getcwd(workingdir,100));
-                for(int i = size;i <strlen(workingdir); i++ ){
-                        printf("%c",workingdir[i]);
-                }
-                printf(" ");
-        }
 }
 
 pid_t process[100];
