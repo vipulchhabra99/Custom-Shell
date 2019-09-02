@@ -42,6 +42,28 @@
 
 #include "main.h"
 
+struct arr tokenize(char *str) {
+
+        struct arr commands;
+
+        for(int i = 0;i < 100;i++){
+                commands.arr[i][0] = '\0';
+        }
+
+        char* ptr = strtok(str," ");
+        
+
+        int i = 0;
+
+        while(ptr != NULL) {
+                strcpy(commands.arr[i],ptr);
+                ptr = strtok(NULL," ");
+                i++;
+        }
+
+        return commands;
+}
+
 struct arr tokenize_comma(char *str) {
 
         struct arr commands;
@@ -63,3 +85,4 @@ struct arr tokenize_comma(char *str) {
 
         return commands;
 }
+

@@ -185,29 +185,6 @@ void take_input(char* str) {
         strcpy(str,buff);
 }
 
-struct arr tokenize(char *str) {
-
-        struct arr commands;
-
-        for(int i = 0;i < 100;i++){
-                commands.arr[i][0] = '\0';
-        }
-
-        char* ptr = strtok(str," ");
-        
-
-        int i = 0;
-
-        while(ptr != NULL) {
-                strcpy(commands.arr[i],ptr);
-                ptr = strtok(NULL," ");
-                i++;
-        }
-
-        return commands;
-}
-
-
 void commands(struct arr commands){
 
         

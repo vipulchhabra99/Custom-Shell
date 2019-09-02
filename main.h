@@ -11,7 +11,6 @@ void shellbasic(char* current_location);
 
 void status_check();
 void take_input(char* str);
-struct arr tokenize(char *str);
 void commands(struct arr commands);
 
 #endif 
