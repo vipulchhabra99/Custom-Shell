@@ -52,16 +52,42 @@ extern pid_t process[100];
 
 void stream_processing(struct arr command){
 
-        //pid_t childpid = fork();
         pid_t wpid;
-
+        int last = 0;
         int status = 0;
         int i = 0;               
         char *args[100];
         args[0] = "\0";
-        close(1);
-        int fd = open(command.arr[2],O_CREAT|O_WRONLY, 0777);
-        args[0] = command.arr[0];
+        
+        while(i < 100){
+                if(strlen(command.arr[i]) == 0 )
+                        break;
+
+                else{
+                        
+                        command.arr[i][strcspn(command.arr[i],"\n")] = 0;
+                                
+                        if(strcmp(command.arr[i],">") == 0) {
+                                last = i;
+                                break;       
+                        }
+
+                        else{
+                                args[i] = command.arr[i];
+                                i++;
+                        }
+                                
+                }
+
+                        
+        }
+
+        if(fork() == 0){
+                int fd = open(command.arr[last+1],O_CREAT|O_WRONLY|O_TRUNC);
+                dup2(fd,1);
+                execvp(args[0],args);
+                exit(0);
+        }
 
          
 }

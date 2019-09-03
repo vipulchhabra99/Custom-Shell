@@ -1,0 +1,6 @@
+ls
+ls > x.txt
+ls > new.txt
+pwd > new.txt
+ls > new.txt
+pwd > new.txt
