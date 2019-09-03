@@ -4,6 +4,10 @@
 struct arr;
 extern int high,low;
 extern pid_t process[100];
+void stream_processing(struct arr command);
+void cd_command(struct arr command);
+void ls_command(struct arr command);
+void pinfo_command(struct arr command);
 void commands(struct arr command);
 
 #endif
