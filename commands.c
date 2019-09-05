@@ -52,7 +52,66 @@ extern int high;
 
 extern pid_t process[100];
 
+void pipe_processing(struct arr command) {
 
+        int i = 0;
+        int command_pointer = 0;
+        int command_length = 0;
+        int pipe_count = 0;
+        pid_t pid;
+        int in;
+
+        in = 0;
+
+        char *args[100][100];
+        args[0][0] = "\0";
+
+        char new_command[100] = "\0";
+        
+        while(i < 100){
+                if(strlen(command.arr[i]) == 0 )
+                        break;
+
+                else{
+                        
+                        command.arr[i][strcspn(command.arr[i],"\n")] = 0;
+                                
+                        if(strcmp(command.arr[i],"|") == 0) {
+                                //printf("%s",new_command);
+                                //printf("%s\n",new_command);
+                                args[command_pointer][command_length] = NULL;
+                                i++;
+                                command_length = 0;
+                                command_pointer++;
+                        }
+
+                        else{
+                               args[command_pointer][command_length] = command.arr[i];
+                               i++;
+                               command_length++;
+                        }
+                                
+                }
+
+        }
+
+
+        int fd[2];
+        pipe(fd);
+
+
+        if(fork() == 0) {
+                dup2(fd[1],1);
+                execvp(args[0][0],args[0]);
+                exit(0);
+        }
+
+        if(fork() == 0) {
+                dup2(fd[0],0);
+                execvp(args[1][0],args[1]);
+                exit(0);
+        }
+}
 
 void cd_command(struct arr command) {
         int x = chdir(command.arr[1]);
@@ -344,12 +403,21 @@ void commands(struct arr command){
                         break;
                 }
 
+                if(strcmp(command.arr[i], "|") == 0){
+                        flag = 2;
+                        break;
+                }
+
                 if(strcmp(command.arr[i],"\0") == 0)
                 break;
         }
 
         if(flag == 1) {
                 stream_processing(command);
+        }
+
+        else if(flag == 2) {
+                pipe_processing(command);
         }
 
         else {
