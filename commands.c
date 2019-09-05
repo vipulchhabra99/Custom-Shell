@@ -52,6 +52,7 @@ extern int high;
 
 extern pid_t process[100];
 
+
 void pipe_processing(struct arr command) {
 
         int i = 0;
@@ -69,16 +70,20 @@ void pipe_processing(struct arr command) {
         char new_command[100] = "\0";
         
         while(i < 100){
+
                 if(strlen(command.arr[i]) == 0 )
                         break;
 
                 else{
+
+                        //printf("%s ",command.arr[i]);
                         
                         command.arr[i][strcspn(command.arr[i],"\n")] = 0;
+                        command.arr[i][strcspn(command.arr[i]," ")] = 0;
+                        //printf("%s\n",command.arr[i]);
                                 
                         if(strcmp(command.arr[i],"|") == 0) {
-                                //printf("%s",new_command);
-                                //printf("%s\n",new_command);
+                                pipe_count++;
                                 args[command_pointer][command_length] = NULL;
                                 i++;
                                 command_length = 0;
@@ -95,22 +100,60 @@ void pipe_processing(struct arr command) {
 
         }
 
+        int fd[2*pipe_count];
 
-        int fd[2];
-        pipe(fd);
-
-
-        if(fork() == 0) {
-                dup2(fd[1],1);
-                execvp(args[0][0],args[0]);
-                exit(0);
+        for(i = 0;i < pipe_count;i++) {
+                if(pipe(fd+i*2) < 0) {
+                        perror("couldn't pipe");
+                        exit(EXIT_FAILURE);
+                }
         }
 
-        if(fork() == 0) {
-                dup2(fd[0],0);
-                execvp(args[1][0],args[1]);
-                exit(0);
+        int j = 0;
+        int status;
+        int command_count = 0;
+
+        while(command_count < pipe_count+1){
+                pid = fork();
+                if(pid == 0){
+                        if(command_count!= pipe_count){
+                                if(dup2(fd[j+1],1) < 0){
+                                        perror("dup2");
+                                        exit(EXIT_FAILURE);
+                                }
+                        }
+
+                        if(j != 0){
+                                if(dup2(fd[j-2],0) < 0){
+                                        perror("dup2");
+                                        exit(EXIT_FAILURE);
+                                }
+                        }
+
+                        for(i = 0;i < 2*pipe_count;i++){
+                                close(fd[i]);
+                        }
+
+                        if(execvp(args[command_count][0],args[command_count]) < 0){
+                                exit(EXIT_FAILURE);
+                        }
+
+                } else if(pid < 0){
+                        exit(EXIT_FAILURE);
+                }
+
+                command_count += 1;
+                j += 2;
         }
+
+        for(i = 0;i < 2*pipe_count;i++){
+                close(fd[i]);
+        }
+
+        for(i = 0;i < pipe_count+1;i++){
+                wait(&status);
+        }
+
 }
 
 void cd_command(struct arr command) {
@@ -404,6 +447,7 @@ void commands(struct arr command){
                 }
 
                 if(strcmp(command.arr[i], "|") == 0){
+                        //printf("Yes");
                         flag = 2;
                         break;
                 }
