@@ -40,121 +40,21 @@
 
 #include <fcntl.h>
 
+#include <signal.h>
+
 #include "history.h"
 
 #include "main.h"
 
 #include "io_redirections.h"
 
+#include "pipe_processing.h"
+
 
 extern int low;
 extern int high;
 
 extern pid_t process[100];
-
-
-void pipe_processing(struct arr command) {
-
-        int i = 0;
-        int command_pointer = 0;
-        int command_length = 0;
-        int pipe_count = 0;
-        pid_t pid;
-        int in;
-
-        in = 0;
-
-        char *args[100][100];
-        args[0][0] = "\0";
-
-        char new_command[100] = "\0";
-        
-        while(i < 100){
-
-                if(strlen(command.arr[i]) == 0 )
-                        break;
-
-                else{
-
-                        //printf("%s ",command.arr[i]);
-                        
-                        command.arr[i][strcspn(command.arr[i],"\n")] = 0;
-                        command.arr[i][strcspn(command.arr[i]," ")] = 0;
-                        //printf("%s\n",command.arr[i]);
-                                
-                        if(strcmp(command.arr[i],"|") == 0) {
-                                pipe_count++;
-                                args[command_pointer][command_length] = NULL;
-                                i++;
-                                command_length = 0;
-                                command_pointer++;
-                        }
-
-                        else{
-                               args[command_pointer][command_length] = command.arr[i];
-                               i++;
-                               command_length++;
-                        }
-                                
-                }
-
-        }
-
-        int fd[2*pipe_count];
-
-        for(i = 0;i < pipe_count;i++) {
-                if(pipe(fd+i*2) < 0) {
-                        perror("couldn't pipe");
-                        exit(EXIT_FAILURE);
-                }
-        }
-
-        int j = 0;
-        int status;
-        int command_count = 0;
-
-        while(command_count < pipe_count+1){
-                pid = fork();
-                if(pid == 0){
-                        if(command_count!= pipe_count){
-                                if(dup2(fd[j+1],1) < 0){
-                                        perror("dup2");
-                                        exit(EXIT_FAILURE);
-                                }
-                        }
-
-                        if(j != 0){
-                                if(dup2(fd[j-2],0) < 0){
-                                        perror("dup2");
-                                        exit(EXIT_FAILURE);
-                                }
-                        }
-
-                        for(i = 0;i < 2*pipe_count;i++){
-                                close(fd[i]);
-                        }
-
-                        if(execvp(args[command_count][0],args[command_count]) < 0){
-                                exit(EXIT_FAILURE);
-                        }
-
-                } else if(pid < 0){
-                        exit(EXIT_FAILURE);
-                }
-
-                command_count += 1;
-                j += 2;
-        }
-
-        for(i = 0;i < 2*pipe_count;i++){
-                close(fd[i]);
-        }
-
-        for(i = 0;i < pipe_count+1;i++){
-                wait(&status);
-        }
-
-}
 
 void cd_command(struct arr command) {
         int x = chdir(command.arr[1]);
@@ -530,6 +430,59 @@ void commands(struct arr command){
                         else{
                                 read_history(atoi(command.arr[1]));
                         }
+                }
+
+                else if(!strcmp(command.arr[0],"setenv")) {
+                        if(strlen(command.arr[1]) == 0 || strlen(command.arr[3])!=0){
+                                perror("Insufficent Number Of Arguments");
+                        }
+
+                        else{
+                                if(strlen(command.arr[2]) == 0){
+                                        setenv(command.arr[1],"\0",1);
+                                }
+
+                                else{
+                                        setenv(command.arr[1],command.arr[2],1);
+                                }
+                        }
+                }
+
+                else if(!strcmp(command.arr[0],"unsetenv")) {
+                        if(strlen(command.arr[1]) == 0){
+                                perror("No Variable Name");
+                        }
+
+                        else{
+                                unsetenv(command.arr[1]);
+                        }
+                }
+
+                else if(!strcmp(command.arr[0],"kjob")){
+                        if(strlen(command.arr[1]) == 0 || strlen(command.arr[2]) == 0){
+                                perror("Unsufficient argumnets");
+                        }
+
+                        else{
+
+                                pid_t procid = atoi(command.arr[1]);
+                                int signal = atoi(command.arr[2]);
+                                int m = kill(procid,signal);
+
+                                if(m < 0){
+                                        perror("Unable to Send Signal");
+                                }
+                        }
+                }
+
+                else if(!strcmp(command.arr[0],"overkill")){
+                       
+                       for(int xy = 1;xy < 100;xy++){
+                               if(process[xy] == 0){
+                                       break;
+                               }
+                               kill(process[xy],9);
+                       }
                 }
 
 
