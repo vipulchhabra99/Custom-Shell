@@ -53,8 +53,10 @@
 
 extern int low;
 extern int high;
-
+extern int fglow;
+extern int fghigh;
 extern pid_t process[100];
+extern pid_t fgprocess[100];
 
 void cd_command(struct arr command) {
         int x = chdir(command.arr[1]);
@@ -337,30 +339,29 @@ void commands(struct arr command){
 
         command.arr[0][strcspn(command.arr[0],"\n")] = 0;
 
-        int flag = 0;
+        int flag1 = 0;
+        int flag2 = 0;
 
         for(int i = 0;i < 100;i++) {
                 //printf("%s\n",command.arr[i]);
                 if(strcmp(command.arr[i],">") == 0 || strcmp(command.arr[i],"<") == 0 || strcmp(command.arr[i],">>") == 0){
-                        flag = 1;
-                        break;
+                        flag1 = 1;
                 }
 
                 if(strcmp(command.arr[i], "|") == 0){
                         //printf("Yes");
-                        flag = 2;
-                        break;
+                        flag2 = 2;
                 }
 
                 if(strcmp(command.arr[i],"\0") == 0)
                 break;
         }
 
-        if(flag == 1) {
+        if(flag1 == 1 && flag2 == 0) {
                 stream_processing(command);
         }
 
-        else if(flag == 2) {
+        else if(flag2 == 2) {
                 pipe_processing(command);
         }
 
@@ -485,6 +486,91 @@ void commands(struct arr command){
                        }
                 }
 
+                else if(!strcmp(command.arr[0],"fg")){
+
+                        if(strlen(command.arr[1]) == 0){
+                                perror("Insufficent Arguments");
+                        }
+
+                        else{
+                                int job_no = atoi(command.arr[1]);
+
+                                int stat;
+
+                                pid_t cpid = waitpid(job_no,&stat,0);
+
+                                if(WIFEXITED(stat)){
+                                        printf("The process with %d pid exited !\n",job_no);
+                                }
+                        }
+                }
+
+                else if(!strcmp(command.arr[0],"jobs")){
+                        if(strlen(command.arr[1]) != 0){
+                                perror("ARGUMENTS NOT REQUIRED");
+                        }
+
+                        else{
+                                for(int i = fglow;i < fghigh;i++){
+                                        if(fgprocess[i] > 0){
+                                                char spid[10240] = "\0";
+                                                char buffer[10240] = "\0";
+
+                                                size_t bytes_read;
+
+                                                sprintf(spid,"/proc/%d/status",fgprocess[i]);
+
+                                                FILE *fp;
+
+                                                fp = fopen(spid,"r");
+
+                                                char ch;
+                                                char status;
+
+                                                bytes_read = fread(buffer,1,sizeof(buffer),fp);
+
+                                                fclose(fp);
+
+                                                buffer[bytes_read] = '\0';
+
+                                                char* match;
+                                                unsigned long int vmsize;
+
+                                                match = strstr(buffer,"State");
+
+                                                sscanf(match,"State:	%c",&status);
+
+                                                printf("Status : %c\n",status);
+
+                                                match = strstr(buffer,"VmSize");
+
+                                                sscanf(match,"VmSize:	  %lu",&vmsize);
+
+                                                printf("Memory : %lu\n",vmsize);
+
+                                                sprintf(spid,"/proc/%d/cmdline",fgprocess[i]);
+
+                                                fp = fopen(spid,"r");
+
+                                                bytes_read = fread(buffer,1,sizeof(buffer),fp);
+
+                                                buffer[bytes_read] = '\0';
+
+                                                printf("Executable path : ");
+
+                                                for(int i = 0;i <= bytes_read;i++) {
+                                                        printf("%c",buffer[i]);
+                                                }
+
+                                                printf("\n");
+
+                                                fclose(fp);
+                                        }
+                                }
+                        }
+                        
+                }
+
 
 
                 else {
@@ -543,6 +629,8 @@ void commands(struct arr command){
                                 pid_t wpid;
 
                                 int status = 0;
+
+                                fgprocess[fghigh] = childpid;
                         
                                 if(childpid == 0){
                                         exit(execvp(args[0],args));
@@ -550,6 +638,9 @@ void commands(struct arr command){
                                 }
 
                                 else {
+                                        if(fghigh < 100)
+                                        fghigh++;
+
                                         wait(NULL);
                                 }
 
