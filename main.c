@@ -54,6 +54,9 @@
 
 #include "main.h"
 
+void sighandler(int signnum){
+        fflush(stdout);
+}
 
 void print_perms(mode_t st) {
     char perms[11];
@@ -79,11 +82,17 @@ void print_perms(mode_t st) {
 
 pid_t process[100];
 
+
 int low = 1,high = 1;
+
+pid_t current_process;
 
 int main() {
 
-signal(SIGCHLD,status_check);
+
+        //signal(SIGINT,SIG_IGN);
+        signal(SIGCHLD,status_check);
+        //signal(SIGTSTP,SIG_IGN);
 
     char* initial_location = getenv("PWD");
     shellbasic(initial_location);
@@ -97,13 +106,13 @@ signal(SIGCHLD,status_check);
         struct arr comm;
 
         for(int i = 0;i < 100;i++){
-                comm.arr[i][0] = '\0';
+                strcpy(comm.arr[i],"\0");
         }
 
         struct arr comm_split;
 
         for(int i = 0;i < 100;i++){
-                comm_split.arr[i][0] = '\0';
+                strcpy(comm_split.arr[i],"\0");
         }
 
         comm_split = tokenize_comma(buff);

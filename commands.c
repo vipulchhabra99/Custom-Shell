@@ -53,10 +53,10 @@
 
 extern int low;
 extern int high;
-extern int fglow;
-extern int fghigh;
+
 extern pid_t process[100];
-extern pid_t fgprocess[100];
+
+extern pid_t current_process;
 
 void cd_command(struct arr command) {
         int x = chdir(command.arr[1]);
@@ -511,14 +511,14 @@ void commands(struct arr command){
                         }
 
                         else{
-                                for(int i = fglow;i < fghigh;i++){
-                                        if(fgprocess[i] > 0){
+                                for(int i = low;i < high;i++){
+                                        if(process[i] > 0){
                                                 char spid[10240] = "\0";
                                                 char buffer[10240] = "\0";
 
                                                 size_t bytes_read;
 
-                                                sprintf(spid,"/proc/%d/status",fgprocess[i]);
+                                                sprintf(spid,"/proc/%d/status",process[i]);
 
                                                 FILE *fp;
 
@@ -540,15 +540,7 @@ void commands(struct arr command){
 
                                                 sscanf(match,"State:	%c",&status);
 
-                                                printf("Status : %c\n",status);
-
-                                                match = strstr(buffer,"VmSize");
-
-                                                sscanf(match,"VmSize:	  %lu",&vmsize);
-
-                                                printf("Memory : %lu\n",vmsize);
-
-                                                sprintf(spid,"/proc/%d/cmdline",fgprocess[i]);
+                                                sprintf(spid,"/proc/%d/cmdline",process[i]);
 
                                                 fp = fopen(spid,"r");
 
@@ -556,7 +548,25 @@ void commands(struct arr command){
 
                                                 buffer[bytes_read] = '\0';
 
-                                                printf("Executable path : ");
+                                                char *status_full;
+
+                                                if(status == 'R'){
+                                                        status_full = "Running";
+                                                }
+
+                                                if(status == 'S'){
+                                                        status_full = "Sleeping";
+                                                }
+
+                                                if(status == 'Z'){
+                                                        status_full = "Zombie";
+                                                }
+
+                                                if(status == 'X'){
+                                                        status_full = "Dead";
+                                                }
+
+                                                printf("[X] %s ",status_full);
 
                                                 for(int i = 0;i <= bytes_read;i++) {
                                                         printf("%c",buffer[i]);
@@ -569,6 +579,19 @@ void commands(struct arr command){
                                 }
                         }
                         
+                }
+
+                else if(!strcmp(command.arr[0],"bg")){
+
+                        if(strlen(command.arr[1]) == 0){
+                                printf("INSUFFICENT ARGUMENTS!\n");
+                        }
+
+                        else{
+                                int pid_bg = atoi(command.arr[1]);
+                                printf("%d",pid_bg);
+                                kill(pid_bg,SIGCONT);
+                        }
                 }
 
 
@@ -611,8 +634,10 @@ void commands(struct arr command){
                                 pid_t childpid = fork();
 
                                 process[high] = childpid;
+                                current_process = childpid;
 
                                 if(childpid == 0) {
+                                        //signal(SIGCONT,movetobg);
                                         setpgid(0,getpid());
                                         exit(execvp(args[0],args));
                                 }
@@ -629,17 +654,16 @@ void commands(struct arr command){
                                 pid_t wpid;
 
                                 int status = 0;
-
-                                fgprocess[fghigh] = childpid;
+                                current_process = childpid;
                         
                                 if(childpid == 0){
+
+                                        //signal(SIGCONT,movetobg);
                                         exit(execvp(args[0],args));
                                 
                                 }
 
                                 else {
-                                        if(fghigh < 100)
-                                        fghigh++;
 
                                         wait(NULL);
                                 }
