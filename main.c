@@ -87,12 +87,20 @@ int low = 1,high = 1;
 
 pid_t current_process;
 
+void pushtobg(int signum){
+        process[high] = current_process;
+        kill(current_process,SIGCONT);
+
+        if(high < 100)
+        high++;
+}
+
 int main() {
 
 
         //signal(SIGINT,SIG_IGN);
         signal(SIGCHLD,status_check);
-        //signal(SIGTSTP,SIG_IGN);
+        signal(SIGTSTP,pushtobg);
 
     char* initial_location = getenv("PWD");
     shellbasic(initial_location);

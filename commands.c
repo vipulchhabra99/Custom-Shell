@@ -418,7 +418,7 @@ void commands(struct arr command){
                         pinfo_command(command);
                 }
 
-                else if(!strcmp(command.arr[0], "exit")){
+                else if(!strcmp(command.arr[0], "quit")){
                         exit(0);
                 }
 
@@ -634,7 +634,6 @@ void commands(struct arr command){
                                 pid_t childpid = fork();
 
                                 process[high] = childpid;
-                                current_process = childpid;
 
                                 if(childpid == 0) {
                                         //signal(SIGCONT,movetobg);
