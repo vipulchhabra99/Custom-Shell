@@ -439,6 +439,12 @@ void commands(struct arr command){
                         }
 
                         else{
+                                command.arr[1][strcspn(command.arr[1]," ")] = 0;
+                                command.arr[1][strcspn(command.arr[1],"\n")] = 0;
+
+                                command.arr[2][strcspn(command.arr[2]," ")] = 0;
+                                command.arr[2][strcspn(command.arr[2],"\n")] = 0;
+
                                 if(strlen(command.arr[2]) == 0){
                                         setenv(command.arr[1],"\0",1);
                                 }
@@ -455,6 +461,9 @@ void commands(struct arr command){
                         }
 
                         else{
+                                command.arr[1][strcspn(command.arr[1]," ")] = 0;
+                                command.arr[1][strcspn(command.arr[1],"\n")] = 0;
+
                                 unsetenv(command.arr[1]);
                         }
                 }
