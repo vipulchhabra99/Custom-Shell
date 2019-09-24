@@ -231,6 +231,11 @@ void pinfo_command(struct arr command){
 
                 fp = fopen(spid,"r");
 
+                if(fp == NULL){
+                        perror("No such process exist!");
+                        return;
+                }
+
                 char ch = '\0';
                 char status = '\0';
 
@@ -290,6 +295,11 @@ void pinfo_command(struct arr command){
                 FILE *fp;
 
                 fp = fopen(spid,"r");
+
+                if(fp == NULL){
+                        perror("No such process exist!");
+                        return;
+                }
 
                 char ch;
                 char status;
@@ -532,6 +542,11 @@ void commands(struct arr command){
                                                 FILE *fp;
 
                                                 fp = fopen(spid,"r");
+
+                                                if(fp == NULL){
+                                                        perror("Given Process Doesn't Exist");
+                                                        return;
+                                                }
 
                                                 char ch;
                                                 char status;

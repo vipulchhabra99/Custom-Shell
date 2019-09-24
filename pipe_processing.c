@@ -210,7 +210,7 @@ void pipe_processing(struct arr command) {
                         args[pipe_count][i-1] = NULL;
                 }
 
-                else if(input == 1 && output == 1 || input == 1 && output == 1){
+                else if((input == 1 && output == 1) || (input == 1 && append == 1)){
 
                         for(i = 0;i < 100;i++){
                                 if(args[0][i] == NULL)
@@ -276,7 +276,7 @@ void pipe_processing(struct arr command) {
                                         dup2(fd[j],0);
                                 }
 
-                                if(output == 1 || append == 1 && command_count == pipe_count){
+                                if((output == 1 || append == 1) && (command_count == pipe_count)){
 
                                         if(output == 1) {
                                                 fd[j+1] = open(filename_output,O_CREAT|O_WRONLY| O_TRUNC, 0644);
