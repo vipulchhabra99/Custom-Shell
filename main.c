@@ -80,6 +80,10 @@ void print_perms(mode_t st) {
     printf("%s", perms);
 }
 
+pid_t allprocess[1000] = {-1};
+
+int all_high = 0;
+
 pid_t process[100];
 
 
@@ -87,56 +91,77 @@ int low = 1,high = 1;
 
 pid_t current_process;
 
-void pushtobg(int signum){
-        process[high] = current_process;
-        kill(current_process,SIGCONT);
+void exit(int signum){
+        if(current_process != NULL){
+                kill(current_process,SIGQUIT);
+        }
+        
+}
 
-        if(high < 100)
-        high++;
+
+void pushtobg(int sig_num){
+        signal(SIGTSTP, sighandler); 
+        kill(current_process,SIGTSTP);
+        //process[high] = current_process;
+        //kill(current_process,SIGSTOP);
+        /*if(current_process != NULL){
+                printf("Goli");
+                printf("%d",kill(current_process,SIGTSTP));
+                exit(0);
+                //kill(current_process,SIGKILL);
+                //kill(current_process,SIGCONT);
+                current_process = NULL;
+        }
+
+        if(current_process == NULL)
+        printf("HGEy");*/
+        
+        //if(high < 100)
+        //high++;
 }
 
 int main() {
 
-
-        //signal(SIGINT,SIG_IGN);
+        signal(SIGTSTP,SIG_IGN);
+        signal(SIGINT,exit);
         signal(SIGCHLD,status_check);
-        signal(SIGTSTP,pushtobg);
-
-    char* initial_location = getenv("PWD");
-    shellbasic(initial_location);
-    char s[100] = "\0";
-
-    while(1) {
-      char buff[60] = "\0";
-      take_input(buff);
-      //printf("%s",buff);
-        add_to_history(buff);
-        struct arr comm;
-
-        for(int i = 0;i < 100;i++){
-                strcpy(comm.arr[i],"\0");
-        }
-
-        struct arr comm_split;
-
-        for(int i = 0;i < 100;i++){
-                strcpy(comm_split.arr[i],"\0");
-        }
-
-        comm_split = tokenize_comma(buff);
         
 
-        for(int i = 0;i < 100;i++) {
+                char* initial_location = getenv("PWD");
+                shellbasic(initial_location);
+                char s[100] = "\0";
 
-                if(strlen(comm_split.arr[i]) != 0) {
-                        comm = tokenize(comm_split.arr[i]);
+                while(1) {
+                        char buff[60] = "\0";
+                        take_input(buff);
+      //printf("%s",buff);
+                        add_to_history(buff);
+                        struct arr comm;
+
+                        for(int i = 0;i < 100;i++){
+                                strcpy(comm.arr[i],"\0");
+                        }
+
+                        struct arr comm_split;
+
+                        for(int i = 0;i < 100;i++){
+                                strcpy(comm_split.arr[i],"\0");
+                        }
+
+                        comm_split = tokenize_comma(buff);
+        
+
+                        for(int i = 0;i < 100;i++) {
+
+                                if(strlen(comm_split.arr[i]) != 0) {
+                                        comm = tokenize(comm_split.arr[i]);
       //printf("%s\n",commands.arr[0]);
-                        commands(comm);
-                }   
-        }
-      shellbasic(initial_location);
+                                        commands(comm);
+                                }   
+                        }
+                        shellbasic(initial_location);
 
-    }
+                }
 
     return 0;
 }

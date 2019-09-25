@@ -54,9 +54,14 @@
 extern int low;
 extern int high;
 
+extern int all_high;
+extern pid_t allprocess[1000];
+
 extern pid_t process[100];
 
 extern pid_t current_process;
+
+int jobcount = 0;
 
 void cd_command(struct arr command) {
         int x = chdir(command.arr[1]);
@@ -345,6 +350,84 @@ void pinfo_command(struct arr command){
         }
 }
 
+void jobs_list(int id) {
+        char spid[10240] = "\0";
+        char buffer[10240] = "\0";
+        size_t bytes_read;
+
+        sprintf(spid,"/proc/%d/status",id);
+
+        FILE *fp;
+
+        fp = fopen(spid,"r");
+
+        if(fp == NULL){
+                //perror("Given Process Doesn't Exist");
+                return;
+        }
+        jobcount++;
+
+        char ch;
+        char status;
+
+        bytes_read = fread(buffer,1,sizeof(buffer),fp);
+
+        fclose(fp);
+
+        buffer[bytes_read] = '\0';
+
+        char* match;
+        unsigned long int vmsize;
+
+        match = strstr(buffer,"State");
+
+        sscanf(match,"State:	%c",&status);
+
+        sprintf(spid,"/proc/%d/cmdline",id);
+
+        fp = fopen(spid,"r");
+
+        bytes_read = fread(buffer,1,sizeof(buffer),fp);
+
+        buffer[bytes_read] = '\0';
+
+        char *status_full;
+
+        if(status == 'R'){
+                status_full = "Running";
+        }
+
+        if(status == 'S'){
+                status_full = "Sleeping";
+        }
+
+        if(status == 'Z'){
+                status_full = "Zombie";
+        }
+
+        if(status == 'X'){
+                status_full = "Dead";
+        }
+
+        printf("[%d] %s ",jobcount,status_full);
+
+        for(int i = 0;i <= bytes_read;i++) {
+                printf("%c",buffer[i]);
+        }
+
+        printf(" [%d]",id);
+
+        printf("\n");
+
+        fclose(fp);
+}
+
+void wait_for_job(int stat) {
+        if(WIFSTOPPED(stat) || WIFEXITED(stat) || WIFSIGNALED(stat) || WSTOPSIG(stat)){
+                return;
+        }
+}
+
 void commands(struct arr command){
 
         command.arr[0][strcspn(command.arr[0],"\n")] = 0;
@@ -428,8 +511,8 @@ void commands(struct arr command){
                         pinfo_command(command);
                 }
 
-                else if(!strcmp(command.arr[0], "quit")){
-                        exit(0);
+                else if(!strcmp(command.arr[0], "quit") || !strcmp(command.arr[0], "exit")){
+                        kill(getpid(),SIGKILL);
                 }
 
                 else if(!strcmp(command.arr[0], "history")){
@@ -513,6 +596,7 @@ void commands(struct arr command){
 
                         else{
                                 int job_no = atoi(command.arr[1]);
+                                current_process = job_no;
 
                                 int stat;
 
@@ -525,80 +609,16 @@ void commands(struct arr command){
                 }
 
                 else if(!strcmp(command.arr[0],"jobs")){
+
+                        jobcount = 0;
                         if(strlen(command.arr[1]) != 0){
                                 perror("ARGUMENTS NOT REQUIRED");
                         }
 
                         else{
-                                for(int i = low;i < high;i++){
-                                        if(process[i] > 0){
-                                                char spid[10240] = "\0";
-                                                char buffer[10240] = "\0";
-
-                                                size_t bytes_read;
-
-                                                sprintf(spid,"/proc/%d/status",process[i]);
-
-                                                FILE *fp;
-
-                                                fp = fopen(spid,"r");
-
-                                                if(fp == NULL){
-                                                        perror("Given Process Doesn't Exist");
-                                                        return;
-                                                }
-
-                                                char ch;
-                                                char status;
-
-                                                bytes_read = fread(buffer,1,sizeof(buffer),fp);
-
-                                                fclose(fp);
-
-                                                buffer[bytes_read] = '\0';
-
-                                                char* match;
-                                                unsigned long int vmsize;
-
-                                                match = strstr(buffer,"State");
-
-                                                sscanf(match,"State:	%c",&status);
-
-                                                sprintf(spid,"/proc/%d/cmdline",process[i]);
-
-                                                fp = fopen(spid,"r");
-
-                                                bytes_read = fread(buffer,1,sizeof(buffer),fp);
-
-                                                buffer[bytes_read] = '\0';
-
-                                                char *status_full;
-
-                                                if(status == 'R'){
-                                                        status_full = "Running";
-                                                }
-
-                                                if(status == 'S'){
-                                                        status_full = "Sleeping";
-                                                }
-
-                                                if(status == 'Z'){
-                                                        status_full = "Zombie";
-                                                }
-
-                                                if(status == 'X'){
-                                                        status_full = "Dead";
-                                                }
-
-                                                printf("[X] %s ",status_full);
-
-                                                for(int i = 0;i <= bytes_read;i++) {
-                                                        printf("%c",buffer[i]);
-                                                }
-
-                                                printf("\n");
-
-                                                fclose(fp);
+                                for(int i = 0;i < all_high;i++){
+                                        if(allprocess[i] > 0){
+                                                jobs_list(allprocess[i]);
                                         }
                                 }
                         }
@@ -613,8 +633,11 @@ void commands(struct arr command){
 
                         else{
                                 int pid_bg = atoi(command.arr[1]);
-                                printf("%d",pid_bg);
+                                //printf("%d",pid_bg);
                                 kill(pid_bg,SIGCONT);
+                                int stat;
+                                pid_t cpid = waitpid(pid_bg,&stat,WUNTRACED);
+
                         }
                 }
 
@@ -658,8 +681,11 @@ void commands(struct arr command){
                                 pid_t childpid = fork();
 
                                 process[high] = childpid;
+                                allprocess[all_high] = childpid;
 
                                 if(childpid == 0) {
+                                        //signal(SIGCONT,SIG_DFL);
+                                        //signal(SIGINT,SIG_DFL);
                                         //signal(SIGCONT,movetobg);
                                         setpgid(0,getpid());
                                         exit(execvp(args[0],args));
@@ -667,6 +693,9 @@ void commands(struct arr command){
                         
                                 if(high < 100)
                                         high++;
+
+                                if(all_high < 1000)
+                                        all_high++;
 
                         }
 
@@ -677,18 +706,33 @@ void commands(struct arr command){
                                 pid_t wpid;
 
                                 int status = 0;
+                                allprocess[all_high] = childpid;
+
                                 current_process = childpid;
+
+                                if(all_high < 1000)
+                                        all_high++;
                         
                                 if(childpid == 0){
 
-                                        //signal(SIGCONT,movetobg);
+                                        //signal(SIGCONT,SIG_DFL);
+                                        //signal(SIGINT,SIG_DFL);
+                                        signal(SIGTSTP,SIG_DFL);
                                         exit(execvp(args[0],args));
                                 
                                 }
 
                                 else {
 
-                                        wait(NULL);
+                                        int stat;
+
+                                        pid_t cpid = waitpid(childpid,&stat,WUNTRACED);
+
+                                        signal(SIGTTOU, SIG_IGN);
+                                        tcsetpgrp(0, getpid());
+                                        signal(SIGTTOU, SIG_DFL);
+
+                                        
                                 }
 
                         
