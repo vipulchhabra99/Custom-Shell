@@ -98,28 +98,6 @@ void exit(int signum){
         
 }
 
-
-void pushtobg(int sig_num){
-        signal(SIGTSTP, sighandler); 
-        kill(current_process,SIGTSTP);
-        //process[high] = current_process;
-        //kill(current_process,SIGSTOP);
-        /*if(current_process != NULL){
-                printf("Goli");
-                printf("%d",kill(current_process,SIGTSTP));
-                exit(0);
-                //kill(current_process,SIGKILL);
-                //kill(current_process,SIGCONT);
-                current_process = NULL;
-        }
-
-        if(current_process == NULL)
-        printf("HGEy");*/
-        
-        //if(high < 100)
-        //high++;
-}
-
 int main() {
 
         signal(SIGTSTP,SIG_IGN);
