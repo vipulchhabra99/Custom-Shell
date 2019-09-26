@@ -54,6 +54,8 @@
 
 #include "main.h"
 
+#include "linkedlist.h"
+
 void sighandler(int signnum){
         fflush(stdout);
 }
@@ -79,6 +81,9 @@ void print_perms(mode_t st) {
     perms[10] = '\0';
     printf("%s", perms);
 }
+
+struct node *all_process_link = NULL;
+struct node *bg_processes = NULL;
 
 pid_t allprocess[1000] = {-1};
 

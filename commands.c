@@ -50,6 +50,11 @@
 
 #include "pipe_processing.h"
 
+#include "linkedlist.h"
+
+extern struct node *all_process_link;
+extern struct node *bg_processes;
+
 
 extern int low;
 extern int high;
@@ -354,7 +359,7 @@ void jobs_list(int id) {
         char spid[10240] = "\0";
         char buffer[10240] = "\0";
         size_t bytes_read;
-
+        //printf("\n\n");
         sprintf(spid,"/proc/%d/status",id);
 
         FILE *fp;
@@ -570,7 +575,24 @@ void commands(struct arr command){
 
                                 pid_t procid = atoi(command.arr[1]);
                                 int signal = atoi(command.arr[2]);
-                                int m = kill(procid,signal);
+                                
+                                pid_t process_id_curr;
+                                int curr_count = 0;
+
+                                struct node *temp =all_process_link;
+
+                                while(temp != NULL){
+                                        curr_count++;
+
+                                        if(curr_count == procid) {
+                                                process_id_curr = temp->pid;
+                                                break;
+                                        }
+
+                                        temp = temp->next;
+                                }
+                                
+                                int m = kill(process_id_curr,signal);
 
                                 if(m < 0){
                                         perror("Unable to Send Signal");
@@ -579,13 +601,17 @@ void commands(struct arr command){
                 }
 
                 else if(!strcmp(command.arr[0],"overkill")){
-                       
-                       for(int xy = 1;xy < 100;xy++){
-                               if(process[xy] == 0){
-                                       break;
-                               }
-                               kill(process[xy],9);
-                       }
+
+                        struct node *temp1 = all_process_link;
+                        struct node *temp2 = bg_processes;
+
+                        while(temp1 != NULL){
+                                kill(temp1->pid,9);
+                                temp1 = temp1->next;
+                        }
+
+                        //all_process_link = NULL;
+                        //bg_processes = NULL;
                 }
 
                 else if(!strcmp(command.arr[0],"fg")){
@@ -596,14 +622,31 @@ void commands(struct arr command){
 
                         else{
                                 int job_no = atoi(command.arr[1]);
-                                current_process = job_no;
+
+                                pid_t process_id_curr;
+                                int curr_count = 0;
+
+                                struct node *temp =all_process_link;
+
+                                while(temp != NULL){
+                                        curr_count++;
+
+                                        if(curr_count == job_no) {
+                                                process_id_curr = temp->pid;
+                                                current_process = process_id_curr;
+                                                break;
+                                        }
+
+                                        temp = temp->next;
+                                }
+                                //current_process = job_no;
 
                                 int stat;
 
-                                pid_t cpid = waitpid(job_no,&stat,0);
+                                pid_t cpid = waitpid(process_id_curr,&stat,0);
 
                                 if(WIFEXITED(stat)){
-                                        printf("The process with %d pid exited !\n",job_no);
+                                        printf("The process with %d pid exited !\n",process_id_curr);
                                 }
                         }
                 }
@@ -616,10 +659,13 @@ void commands(struct arr command){
                         }
 
                         else{
-                                for(int i = 0;i < all_high;i++){
-                                        if(allprocess[i] > 0){
-                                                jobs_list(allprocess[i]);
-                                        }
+
+                                struct node *temp = all_process_link;
+
+                                while(temp != NULL) {
+                                        //printf("%d",temp->pid);
+                                        jobs_list(temp->pid);
+                                        temp = temp->next;
                                 }
                         }
                         
@@ -644,6 +690,8 @@ void commands(struct arr command){
 
 
                 else {
+
+                        
 
                         int i = 0;
                         int background = 0;
@@ -674,69 +722,79 @@ void commands(struct arr command){
 
                         args[i] = NULL;
 
-                
-
-                        if(background == 1) {
-
-                                pid_t childpid = fork();
-
-                                process[high] = childpid;
-                                allprocess[all_high] = childpid;
-
-                                if(childpid == 0) {
-                                        //signal(SIGCONT,SIG_DFL);
-                                        //signal(SIGINT,SIG_DFL);
-                                        //signal(SIGCONT,movetobg);
-                                        setpgid(0,getpid());
-                                        exit(execvp(args[0],args));
-                                }
-                        
-                                if(high < 100)
-                                        high++;
-
-                                if(all_high < 1000)
-                                        all_high++;
-
+                        if(strcmp(command.arr[0],"\n") == 0 || strcmp(command.arr[0]," ") == 0 || strcmp(command.arr[0],"\0") == 0) {
+                                return;
                         }
 
-                        if(background == 0){
+                        else {
+                                if(background == 1) {
 
-                                pid_t childpid = fork();
+                                        pid_t childpid = fork();
 
-                                pid_t wpid;
+                                        insert(childpid,&bg_processes);
+                                        insert(childpid,&all_process_link);
 
-                                int status = 0;
-                                allprocess[all_high] = childpid;
 
-                                current_process = childpid;
+                                        if(childpid == 0) {
+                                                setpgid(0,getpid());
 
-                                if(all_high < 1000)
-                                        all_high++;
-                        
-                                if(childpid == 0){
+                                                if(execvp(args[0],args) < 0){
+                                                        exit(EXIT_FAILURE);
+                                                }
+                                                else {
+                                                        exit(0);
+                                                }
+                                        }
 
-                                        //signal(SIGCONT,SIG_DFL);
-                                        //signal(SIGINT,SIG_DFL);
-                                        signal(SIGTSTP,SIG_DFL);
-                                        exit(execvp(args[0],args));
-                                
                                 }
 
-                                else {
+                                if(background == 0){
 
-                                        int stat;
+                                        pid_t childpid = fork();
 
-                                        pid_t cpid = waitpid(childpid,&stat,WUNTRACED);
+                                        pid_t wpid;
 
-                                        signal(SIGTTOU, SIG_IGN);
-                                        tcsetpgrp(0, getpid());
-                                        signal(SIGTTOU, SIG_DFL);
+                                        int status = 0;
+                                        insert(childpid,&all_process_link);
+
+                                        current_process = childpid;
+
+                        
+                                        if(childpid == 0){
+
+                                                signal(SIGTSTP,SIG_DFL);
+
+                                                if(execvp(args[0],args) < 0){
+                                                        perror(args[0]);
+                                                        signal(SIGTSTP,SIG_IGN);
+                                                        exit(1);
+                                                }
+                                                else {
+                                                        exit(0);
+                                                }
+                                
+                                        }
+
+                                        else {
+
+                                                int stat;
+
+                                                pid_t cpid = waitpid(childpid,&stat,WUNTRACED);
+
+                                                signal(SIGTTOU, SIG_IGN);
+                                                tcsetpgrp(0, getpid());
+                                                signal(SIGTTOU, SIG_DFL);
 
                                         
-                                }
+                                        }
 
                         
+                                }
                         }
+
+                        
+
+                        
                 
                 }
 
