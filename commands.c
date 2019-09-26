@@ -641,13 +641,25 @@ void commands(struct arr command){
                                 }
                                 //current_process = job_no;
 
+                                //kill(process_id_curr,SIGCONT);
+                                kill(process_id_curr,SIGCONT);
+
                                 int stat;
 
                                 pid_t cpid = waitpid(process_id_curr,&stat,0);
 
                                 if(WIFEXITED(stat)){
                                         printf("The process with %d pid exited !\n",process_id_curr);
+                                        pop(process_id_curr,&all_process_link);
+                                        
                                 }
+
+                                else{
+                                        
+                                        pid_t cpid = waitpid(process_id_curr,&stat,WUNTRACED);
+                                        pop(process_id_curr,&all_process_link);
+                                }
+
                         }
                 }
 
@@ -679,11 +691,28 @@ void commands(struct arr command){
 
                         else{
                                 int pid_bg = atoi(command.arr[1]);
-                                //printf("%d",pid_bg);
-                                kill(pid_bg,SIGCONT);
-                                int stat;
-                                pid_t cpid = waitpid(pid_bg,&stat,WUNTRACED);
 
+                                pid_t process_id_curr;
+                                int curr_count = 0;
+
+                                struct node *temp =all_process_link;
+
+                                while(temp != NULL){
+                                        curr_count++;
+
+                                        if(curr_count == pid_bg) {
+                                                process_id_curr = temp->pid;
+                                                current_process = process_id_curr;
+                                                break;
+                                        }
+
+                                        temp = temp->next;
+                                }
+                                //printf("%d",pid_bg);
+                                kill(process_id_curr,SIGCONT);
+                                int stat;
+                                pid_t cpid = waitpid(process_id_curr,&stat,WUNTRACED);
+                                pop(process_id_curr,&all_process_link);
                         }
                 }
 
