@@ -575,7 +575,7 @@ void commands(struct arr command){
 
                                 pid_t procid = atoi(command.arr[1]);
                                 int signal = atoi(command.arr[2]);
-                                
+                                int check_flag = 0;
                                 pid_t process_id_curr;
                                 int curr_count = 0;
 
@@ -585,18 +585,28 @@ void commands(struct arr command){
                                         curr_count++;
 
                                         if(curr_count == procid) {
+                                                check_flag = 1;
                                                 process_id_curr = temp->pid;
                                                 break;
                                         }
 
                                         temp = temp->next;
                                 }
-                                
-                                int m = kill(process_id_curr,signal);
 
-                                if(m < 0){
-                                        perror("Unable to Send Signal");
+                                if(check_flag == 1){
+                                        int m = kill(process_id_curr,signal);
+
+                                        if(m < 0){
+                                                perror("Unable to Send Signal !");
+                                        }
                                 }
+
+                                if(check_flag == 0) {
+                                        printf("The given process doesn't exist !\n");
+                                        return;
+                                }
+                                
+                                
                         }
                 }
 
@@ -622,7 +632,7 @@ void commands(struct arr command){
 
                         else{
                                 int job_no = atoi(command.arr[1]);
-
+                                int check_flag = 0;
                                 pid_t process_id_curr;
                                 int curr_count = 0;
 
@@ -632,6 +642,7 @@ void commands(struct arr command){
                                         curr_count++;
 
                                         if(curr_count == job_no) {
+                                                check_flag = 1;
                                                 process_id_curr = temp->pid;
                                                 current_process = process_id_curr;
                                                 break;
@@ -642,24 +653,31 @@ void commands(struct arr command){
                                 //current_process = job_no;
 
                                 //kill(process_id_curr,SIGCONT);
-                                kill(process_id_curr,SIGCONT);
 
-                                int stat;
+                                if(check_flag == 1) {
+                                        kill(process_id_curr,SIGCONT);
 
-                                pid_t cpid = waitpid(process_id_curr,&stat,0);
+                                        int stat;
 
-                                if(WIFEXITED(stat)){
-                                        printf("The process with %d pid exited !\n",process_id_curr);
-                                        pop(process_id_curr,&all_process_link);
+                                        pid_t cpid = waitpid(process_id_curr,&stat,0);
+
+                                        if(WIFEXITED(stat)){
+                                                printf("The process with %d pid exited !\n",process_id_curr);
+                                                pop(process_id_curr,&all_process_link);
                                         
+                                        }
+
+                                        else{
+                                                pid_t cpid = waitpid(process_id_curr,&stat,WUNTRACED);
+                                                pop(process_id_curr,&all_process_link);
+                                        }
                                 }
 
                                 else{
-                                        
-                                        pid_t cpid = waitpid(process_id_curr,&stat,WUNTRACED);
-                                        pop(process_id_curr,&all_process_link);
+                                        printf("The given process doesn't exist !\n");
+                                        return;
                                 }
-
+                                
                         }
                 }
 
@@ -691,7 +709,7 @@ void commands(struct arr command){
 
                         else{
                                 int pid_bg = atoi(command.arr[1]);
-
+                                int check_flag = 0;
                                 pid_t process_id_curr;
                                 int curr_count = 0;
 
@@ -701,6 +719,7 @@ void commands(struct arr command){
                                         curr_count++;
 
                                         if(curr_count == pid_bg) {
+                                                check_flag = 1;
                                                 process_id_curr = temp->pid;
                                                 current_process = process_id_curr;
                                                 break;
@@ -709,10 +728,77 @@ void commands(struct arr command){
                                         temp = temp->next;
                                 }
                                 //printf("%d",pid_bg);
-                                kill(process_id_curr,SIGCONT);
-                                int stat;
-                                pid_t cpid = waitpid(process_id_curr,&stat,WUNTRACED);
-                                pop(process_id_curr,&all_process_link);
+
+                                if(check_flag == 1) {
+                                        kill(process_id_curr,SIGCONT);
+                                        int stat;
+                                        pid_t cpid = waitpid(process_id_curr,&stat,WUNTRACED);
+                                        pop(process_id_curr,&all_process_link);
+                                }
+                                
+                                else {
+                                        printf("Given process does't exist !\n");
+                                        return;
+                                }
+                        }
+                }
+
+                else if(!strcmp(command.arr[0],"cronjob")){
+                        //printf("YES !!\n");
+                        if(!strcmp(command.arr[1],"-c")){
+                                //printf("YES @@]\n");
+                                int timedur = -1;
+                                int timeinterval = -1;
+                                char *args[100] = {NULL};
+                                args[0] = "\0";
+                                int i = 2;
+                                while(strcmp(command.arr[i],"-t") && i < 100) {
+
+                                        if(strlen(command.arr[i]) == 0)
+                                        break;
+
+                                        else if(i == 99){
+                                                printf("Unsufficeint Arguments!\n");
+                                                return;
+                                        }
+
+                                        else{
+                                                //printf("%s\n",command.arr[i]);
+                                                
+                                                args[i-2] = command.arr[i];
+                                                i++;
+                                        }
+
+                                }
+
+                                if(!strcmp(command.arr[i],"-t")){
+                                        timedur = atoi(command.arr[i+1]);
+                                        //printf("%d",timedur);
+                                }
+
+                                if(!strcmp(command.arr[i+2],"-p")){
+                                        timeinterval = atoi(command.arr[i+3]);
+                                        //printf("%d",timeinterval);
+                                }
+
+                                if(timedur != -1 || timeinterval != -1){
+                                        
+                                        int execution_count = timeinterval;
+                                        sleep(timedur);
+
+                                        while(execution_count > 0){
+                                                sleep(timedur);
+                                                if(fork() == 0){
+                                                        
+                                                        exit(execvp(args[0],args));
+                                                }
+
+                                                else{
+                                                        wait(NULL);
+                                                }
+                                                execution_count -= timedur;
+                                        }
+                                }
                         }
                 }
 
@@ -810,6 +896,10 @@ void commands(struct arr command){
 
                                                 pid_t cpid = waitpid(childpid,&stat,WUNTRACED);
 
+                                                if(WIFEXITED(stat) || WIFSIGNALED(stat)){
+                                                        pop(childpid,&all_process_link);
+                                                }
+                                                
                                                 signal(SIGTTOU, SIG_IGN);
                                                 tcsetpgrp(0, getpid());
                                                 signal(SIGTTOU, SIG_DFL);
