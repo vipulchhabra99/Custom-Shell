@@ -122,41 +122,41 @@ int main() {
         signal(SIGCHLD,status_check);
         
 
-                char* initial_location = getenv("PWD");
-                shellbasic(initial_location);
-                char s[100] = "\0";
+        char* initial_location = getenv("PWD");
+        shellbasic(initial_location);
+        char s[100] = "\0";
 
-                while(1) {
-                        char buff[60] = "\0";
-                        take_input(buff);
+        while(1) {
+                char buff[60] = "\0";
+                take_input(buff);
       //printf("%s",buff);
-                        add_to_history(buff);
-                        struct arr comm;
+                add_to_history(buff);
+                struct arr comm;
 
-                        for(int i = 0;i < 100;i++){
-                                strcpy(comm.arr[i],"\0");
-                        }
+                for(int i = 0;i < 100;i++){
+                        strcpy(comm.arr[i],"\0");
+                }
 
-                        struct arr comm_split;
+                struct arr comm_split;
 
-                        for(int i = 0;i < 100;i++){
-                                strcpy(comm_split.arr[i],"\0");
-                        }
+                for(int i = 0;i < 100;i++){
+                        strcpy(comm_split.arr[i],"\0");
+                }
 
-                        comm_split = tokenize_comma(buff);
+                comm_split = tokenize_comma(buff);
         
 
-                        for(int i = 0;i < 100;i++) {
+                for(int i = 0;i < 100;i++) {
 
-                                if(strlen(comm_split.arr[i]) != 0) {
-                                        comm = tokenize(comm_split.arr[i]);
+                        if(strlen(comm_split.arr[i]) != 0) {
+                                comm = tokenize(comm_split.arr[i]);
       //printf("%s\n",commands.arr[0]);
-                                        commands(comm);
-                                }   
-                        }
-                        shellbasic(initial_location);
-
+                                commands(comm);
+                        }   
                 }
+                shellbasic(initial_location);
+
+        }
 
     return 0;
 }
