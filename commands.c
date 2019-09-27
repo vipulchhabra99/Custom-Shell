@@ -671,6 +671,8 @@ void commands(struct arr command){
                                                 pid_t cpid = waitpid(process_id_curr,&stat,WUNTRACED);
                                                 pop(process_id_curr,&all_process_link);
                                         }
+
+                                        tcsetpgrp(0,getpid());
                                 }
 
                                 else{
@@ -790,7 +792,10 @@ void commands(struct arr command){
                                                 sleep(timedur);
                                                 if(fork() == 0){
                                                         
-                                                        exit(execvp(args[0],args));
+                                                        if(execvp(args[0],args) < 0) {
+                                                                printf("Invalid command !");
+                                                                return;
+                                                        }
                                                 }
 
                                                 else{
@@ -854,10 +859,8 @@ void commands(struct arr command){
                                                 setpgid(0,getpid());
 
                                                 if(execvp(args[0],args) < 0){
-                                                        exit(EXIT_FAILURE);
-                                                }
-                                                else {
-                                                        exit(0);
+                                                        printf("Invalid command !");
+                                                        return;
                                                 }
                                         }
 
@@ -880,14 +883,9 @@ void commands(struct arr command){
                                                 signal(SIGTSTP,SIG_DFL);
 
                                                 if(execvp(args[0],args) < 0){
-                                                        perror(args[0]);
-                                                        signal(SIGTSTP,SIG_IGN);
-                                                        exit(1);
+                                                        printf("Invalid command !\n");
+                                                        return;
                                                 }
-                                                else {
-                                                        exit(0);
-                                                }
-                                
                                         }
 
                                         else {

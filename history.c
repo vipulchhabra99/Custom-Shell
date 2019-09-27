@@ -51,6 +51,10 @@ void add_to_history(char* str){
         
         char error[] = "Unable to write history";
         int check = write(file,str,strlen(str));
+
+        if(check < 0){
+                printf("%s",error);
+        }
 }
 
 void read_history(int n){

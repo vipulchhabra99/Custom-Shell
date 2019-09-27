@@ -111,8 +111,12 @@ void exit(int signum){
 int main() {
 
         char new_file[] = "history.txt";
-        file = open(new_file,O_WRONLY | O_CREAT |O_TRUNC);
-        fd = open(new_file,O_RDONLY|O_CREAT);
+        file = open(new_file,O_WRONLY | O_CREAT |O_TRUNC,0644);
+
+        if(file < 0){
+                printf("Error in file creation !\n");
+        }
+        fd = open(new_file,O_RDONLY,0644);
         if(fd < 0){
                 printf("Error in reading history !\n");
         }
