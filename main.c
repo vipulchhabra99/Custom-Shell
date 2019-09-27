@@ -127,6 +127,7 @@ int main() {
         char s[100] = "\0";
 
         while(1) {
+                
                 char buff[60] = "\0";
                 take_input(buff);
       //printf("%s",buff);
@@ -154,6 +155,7 @@ int main() {
                                 commands(comm);
                         }   
                 }
+                        
                 shellbasic(initial_location);
 
         }
