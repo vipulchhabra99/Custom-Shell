@@ -40,56 +40,67 @@
 
 #include <fcntl.h>
 
+#include "main.h"
+
+extern int file;
+
+extern int fd;
+
 void add_to_history(char* str){
         
-        FILE *file;
-        char new_file[] = "history";
-        char error[] = "Unable to write history";
-        file = fopen(new_file, "a+");
         
-
-        fputs(str,file);
-
-        fclose(file);
-
-
+        char error[] = "Unable to write history";
+        int check = write(file,str,strlen(str));
 }
 
 void read_history(int n){
-
-        int fd;
 
         char c;
 
         int l = 0;
 
-        //printf("%d",n);
+        
+        lseek(fd,0,SEEK_END);
 
-        char file[] = "history";
-
-        char error[] = "Unable to write history";
-
-        fd = open(file,O_RDONLY);
-        if(fd < 0){
-                printf("Error");
-        } else {
-                lseek(fd,0,SEEK_END);
-
-                while(l < n+1 && lseek(fd,-1,SEEK_CUR) != -1){
-                        read(fd,&c,1);
+        while(l < n+1 && lseek(fd,-1,SEEK_CUR) != -1){
+                read(fd,&c,1);
                         
-                        lseek(fd,-1,SEEK_CUR);
+                lseek(fd,-1,SEEK_CUR);
                         
-                        if(c == '\n')
-                                l++;
-                }
+                if(c == '\n')
+                        l++;
+        }
                 
-                while(read(fd,&c,1) != 0){
-                        printf("%c",c);
-                }
+        while(read(fd,&c,1) != 0){
+                printf("%c",c);
         }
 
-        
+        lseek(fd,0,SEEK_END);
 
+}
+
+void up_buttons(int n){
+
+        char c;
+
+        int l = 0;
+
+        
+        lseek(fd,0,SEEK_END);
+
+        while(l < n+1 && lseek(fd,-1,SEEK_CUR) != -1){
+                read(fd,&c,1);
+                        
+                lseek(fd,-1,SEEK_CUR);
+                        
+                if(c == '\n')
+                        l++;
+        }
+                
+        while(read(fd,&c,1) != 0 && c != '\n'){
+                printf("%c",c);
+        }
+
+        lseek(fd,0,SEEK_END);
 
 }

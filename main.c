@@ -87,6 +87,11 @@ struct node *bg_processes = NULL;
 
 pid_t allprocess[1000] = {-1};
 
+
+int file;
+int fd;
+
+
 int all_high = 0;
 
 pid_t process[100];
@@ -104,6 +109,13 @@ void exit(int signum){
 }
 
 int main() {
+
+        char new_file[] = "history.txt";
+        file = open(new_file,O_WRONLY | O_CREAT |O_TRUNC);
+        fd = open(new_file,O_RDONLY|O_CREAT);
+        if(fd < 0){
+                printf("Error in reading history !\n");
+        }
 
         signal(SIGTSTP,SIG_IGN);
         signal(SIGINT,exit);
