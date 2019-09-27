@@ -1,0 +1,2 @@
+test.out: commands.c history.c io_redirections.c linkedlist.c main.c pipe_processing.c shell_input.c shell_path.c status_check.c tokenize_command.c
+	gcc -o test.out commands.c history.c io_redirections.c linkedlist.c main.c pipe_processing.c shell_input.c shell_path.c status_check.c tokenize_command.c -I.
